@@ -1,0 +1,36 @@
+################
+# Author      : Peter Zurzolo (20th Aug, 2015)
+# Description : Simple CPU and OS details lister.
+# Details     : Script to collect CPU and OS details of the machine it is run on.
+# 
+# Instructions: Run this script on the PC to export some of the PC specs.
+# Output      : Creates "C:\scripts\<COMPUTERNAME-DATETIME>-details.csv" with results.
+# Requires    : Powershell must be installed on the PC. Set-ExecutionPolicy must be set to RemoteSigned. 
+################
+
+Function Get-PCDetails {
+    PROCESS {
+        $obj = New-Object PSObject
+
+        try {
+            # OS Details
+            $osd = Get-WmiObject Win32_OperatingSystem | Select CSName, Caption, OSArchitecture
+            # CPU Details
+            $cpu = Get-WmiObject Win32_Processor | Select Name
+
+            # Adding details to $obj
+            $obj | Add-Member NoteProperty PCName ($osd.CSName)
+            $obj | Add-Member NoteProperty OSName ($osd.Caption)
+            $obj | Add-Member NoteProperty OSArchitecture ($osd.OSArchitecture)
+            $obj | Add-Member NoteProperty CPUName ($cpu.Name)
+            
+        } catch [Exception] {
+
+        }
+        return $obj
+    }
+}
+
+# Export to CSV with results
+$nullResult = Get-PCDetails | Sort-Object -Property PCName | 
+              Export-Csv -Path ('C:\scripts\{0}-{1:yyyyMMddHHmm}-details.csv' -f $env:COMPUTERNAME,(Get-Date))
